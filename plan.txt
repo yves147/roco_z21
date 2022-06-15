@@ -1,0 +1,4 @@
+Di, 14. Jun
+-----------
+- LAN_X-Rückmeldungen, Schalten 6-8
+- CAN 4?

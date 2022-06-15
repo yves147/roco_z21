@@ -1,0 +1,6 @@
+*.o
+*.out
+*.sh
+node_modules/
+*.json
+.vscode/
