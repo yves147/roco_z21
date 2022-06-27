@@ -13,7 +13,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#include "lib.h"
+#include "lib.hpp"
 
 #define TEST_OUTPUT = "data/messungen-14.txt"
 #define Z21_ADDRESS "192.168.0.111"
@@ -64,15 +64,16 @@ int main(int argc, char *argv[]) {
   auto driveMsg1 = formPacket(s1);
   z21_sendto(sockfd, driveMsg1, sizeof(driveMsg1), (struct sockaddr *)&servaddr,
              sizeof(servaddr));*/
-  // singleState s2 = z21_lan_x_set_turnout(3, 1, 0);
-
-  /*singleState s2 = z21_lan_x_set_loco_drive(3, 0, 1, 0);
+  
+  singleState s2 = z21_lan_x_set_loco_drive(3, 0, 1, 0);
+  //singleState s2 = z21_lan_x_set_turnout(4, 1, 0);
   auto driveMsg2 = formPacket(s2);
   z21_sendto(sockfd, driveMsg2, sizeof(driveMsg2), (struct sockaddr *)&servaddr,
-             sizeof(servaddr));*/
+             sizeof(servaddr));
+
   // singleState s = z21_lan_x_set_loco_function(3, 0, 2);
 
-  std::chrono::time_point<std::chrono::system_clock> bremsStart;
+  /*std::chrono::time_point<std::chrono::system_clock> bremsStart;
   bool laeuft = false;
   int t = 0;
 
@@ -89,7 +90,6 @@ int main(int argc, char *argv[]) {
       m.push_back((u_int8_t)(buffer[i]));
     };
     singleBasicResponseState s = z21_response(m);
-    std::cout << s.stateName << std::endl;
     if (s.stateName == "LOCO_DATA") {
       singleLocoData sLD = z21_loco_data(s.raw);
       std::cout << std::to_string(sLD.Id) << std::endl;
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
       if (sLD.Id == 46) {
         bremsStart = d;
         laeuft = true;
-        singleState s2 = z21_lan_x_set_loco_drive(3, 0, 1, 1);
+        singleState s2 = z21_lan_x_set_loco_drive(3, 0, 1, 14);
         auto driveMsg2 = formPacket(s2);
         z21_sendto(sockfd, driveMsg2, sizeof(driveMsg2),
                    (struct sockaddr *)&servaddr, sizeof(servaddr));
@@ -115,6 +115,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
   }
+
+  close(sockfd);*/
 
   return 0;
 };

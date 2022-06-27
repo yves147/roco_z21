@@ -21,7 +21,7 @@
 #include <chrono>
 #include <unistd.h>
 
-#include "lib.h"
+#include "lib.hpp"
 
 #define Z21_LOK_ID = 3
 
@@ -60,161 +60,11 @@ std::chrono::time_point<std::chrono::system_clock> castNow() {
   return std::chrono::time_point_cast<std::chrono::milliseconds>(now);
 };
 
-/*udp_c::udp_c(int port, const std::string &adresse)
-    : in_port(port), in_adresse(adresse) {
-  char dport[16];
-  snprintf(dport, sizeof(dport), "%d", in_port);
-  dport[sizeof(dport) / sizeof(dport[0]) - 1] = '\0';
-  struct addrinfo hints;
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_DGRAM;
-  hints.ai_protocol = IPPROTO_UDP;
-  struct sockaddr_in srcaddr;
-  memset(&srcaddr, 0, sizeof(srcaddr));
-  srcaddr.sin_family = AF_INET;
-  srcaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  srcaddr.sin_port = htons(static_cast<uint16_t>(21105));
-  int r(getaddrinfo(adresse.c_str(), dport, &hints, &in_adressenInfo));
-  if (r != 0 || in_adressenInfo == NULL) {
-    throw std::runtime_error(
-        ("invalid address or port: \"" + adresse + ":" + dport + "\"").c_str());
-  }
-  in_verbindung = socket(in_adressenInfo->ai_family, SOCK_DGRAM | SOCK_CLOEXEC,
-                         IPPROTO_UDP);
-  if (bind(in_verbindung, (struct sockaddr *)&srcaddr, sizeof(srcaddr)) < 0) {
-    exit(1);
-  }
-  if (in_verbindung == -1) {
-    // freeaddrinfo(in_adressenInfo);
-    throw std::runtime_error(
-        ("could not create socket for: \"" + adresse + ":" + dport + "\"")
-            .c_str());
-  }
-};
-
-int udp_c::senden(const char *nachricht, size_t groesse) {
-  return sendto(in_verbindung, nachricht, groesse, 0, in_adressenInfo->ai_addr,
-                in_adressenInfo->ai_addrlen);
-};
-
-udp_c::~udp_c() {
-  // freeaddrinfo(in_adressenInfo);
-  close(in_verbindung);
-};
-
-int udp_c::port() const { return in_port; };
-
-int udp_c::verbindung() const { return in_verbindung; };
-
-std::string udp_c::adresse() const { return in_adresse; };
-
-int udp_c::recv(char *msg, size_t max_size) {
-  return ::recv(in_verbindung, msg, max_size, 0);
-};
-
-int udp_c::timed_recv(char *msg, size_t max_size, int max_wait_ms) {
-  fd_set s;
-  FD_ZERO(&s);
-  FD_SET(in_verbindung, &s);
-  struct timeval timeout;
-  timeout.tv_sec = max_wait_ms / 1000;
-  timeout.tv_usec = (max_wait_ms % 1000) * 1000;
-  int retval = select(in_verbindung + 1, &s, &s, &s, &timeout);
-  if (retval == -1) {
-    // select() set errno accordingly
-    return -1;
-  };
-  if (retval > 0) {
-    // our socket has data
-    return ::recv(in_verbindung, msg, max_size, 0);
-  };
-
-  // our socket has no data
-  errno = EAGAIN;
-  return -1;
-};
-
-udp_s::udp_s(int port, const std::string &adresse)
-    : in_port(port), in_adresse(adresse) {
-  char decimal_port[16];
-  snprintf(decimal_port, sizeof(decimal_port), "%d", in_port);
-  decimal_port[sizeof(decimal_port) / sizeof(decimal_port[0]) - 1] = '\0';
-  struct addrinfo hints;
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_DGRAM;
-  hints.ai_protocol = IPPROTO_UDP;
-  int r(getaddrinfo(adresse.c_str(), decimal_port, &hints, &in_adressinfo));
-  if (r != 0 || in_adressinfo == NULL) {
-    throw std::runtime_error(("invalid address or port for UDP socket: \"" +
-                              adresse + ":" + decimal_port + "\"")
-                                 .c_str());
-  }
-  in_verbindung =
-      socket(in_adressinfo->ai_family, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
-  if (in_verbindung == -1) {
-    freeaddrinfo(in_adressinfo);
-    throw std::runtime_error(("could not create UDP socket for: \"" + adresse +
-                              ":" + decimal_port + "\"")
-                                 .c_str());
-  }
-  r = bind(in_verbindung, in_adressinfo->ai_addr, in_adressinfo->ai_addrlen);
-  if (r != 0) {
-    freeaddrinfo(in_adressinfo);
-    close(in_verbindung);
-    throw std::runtime_error(("could not bind UDP socket with: \"" + adresse +
-                              ":" + decimal_port + "\"")
-                                 .c_str());
-  }
-};
-
-udp_s::udp_s(int socket) {
-  in_verbindung = socket;
-};
-
-udp_s::~udp_s() {
-  freeaddrinfo(in_adressinfo);
-  close(in_verbindung);
-};
-
-int udp_s::verbindung() const { return in_verbindung; };
-
-int udp_s::port() const { return in_port; };
-
-std::string udp_s::adresse() const { return in_adresse; };
-
-int udp_s::recv(char *msg, size_t max_size) {
-  return ::recv(in_verbindung, msg, max_size, 0);
-};
-
-int udp_s::timed_recv(char *msg, size_t max_size, int max_wait_ms) {
-  fd_set s;
-  FD_ZERO(&s);
-  FD_SET(in_verbindung, &s);
-  struct timeval timeout;
-  timeout.tv_sec = max_wait_ms / 1000;
-  timeout.tv_usec = (max_wait_ms % 1000) * 1000;
-  int retval = select(in_verbindung + 1, &s, &s, &s, &timeout);
-  if (retval == -1) {
-    // select() set errno accordingly
-    return -1;
-  };
-  if (retval > 0) {
-    // our socket has data
-    return ::recv(in_verbindung, msg, max_size, 0);
-  };
-
-  // our socket has no data
-  errno = EAGAIN;
-  return -1;
-};*/
-
 // z21 Datensatz
 
 void calculateChecksum(z21Datensatz &datenSatz) {
   uint8_t p = 0;
-  for (int i = 0; i < ((std::vector<uint8_t>)datenSatz.data).size(); i++) {
+  for (uint32_t i = 0; i < ((std::vector<uint8_t>)datenSatz.data).size(); i++) {
     p = p ^ datenSatz.data[i];
   }
   datenSatz.data.push_back(p);
@@ -431,7 +281,7 @@ singleState z21_lan_set_broadcastflags(std::vector<uint32_t> flags) {
   d.dataHeader = 0x50;
 
   uint32_t c = 0;
-  for (int i = 0; i < flags.size(); i++) {
+  for (uint32_t i = 0; i < flags.size(); i++) {
     c = c | flags[i];
     // std::cout << "t" << std::hex << flags[i] << c << std::endl;
   }
@@ -783,16 +633,14 @@ singleLocoData z21_loco_data(std::vector<uint8_t> data) {
   return locoData;
 };
 
-int operation2(int x, int y, std::function<int(int, int)> function) {
-  return function(x, y);
-}
-
 singleBasicResponseState z21_response(std::vector<uint8_t> data) {
+  std::cout << std::to_string(data.size()) << std::endl;
   singleBasicResponseState s;
 
   s.dataLen = data[0];
-  if (s.dataLen > data.size()) {
-    throw std::runtime_error("Invalid DATA LENGTH in response packet: Invalid");
+  if (s.dataLen != data.size()) {
+    std::cout << "Invalid DATA LENGTH in response packet: Invalid" << std::endl;
+    throw std::runtime_error("INVALID_DATA_LENGTH");
   }
 
   s.header = data[2];
@@ -800,10 +648,18 @@ singleBasicResponseState z21_response(std::vector<uint8_t> data) {
   std::vector<uint8_t> idata(data.begin() + 4, data.begin() + s.dataLen);
   s.raw = idata;
 
-  if (s.header == 0xa1 && idata.size() == 6) {
+  if (s.header == 0xa2) {
+    std::bitset<8> w(idata[5]);
+    if (w[0] != 0 && w[1] != 1) {
+      std::cout << w << std::endl;
+    }
+  }
+  if (s.header == 0xa1) {
     s.stateName = "LOCO_DATA";
   } else if (s.header == 0x10) {
     s.stateName = "LAN_GET_SERIAL_NUMBER";
+  } else if(s.header == 0x40 && idata[0] == 0xEF){
+    s.stateName = "LAN_X_LOCO_INFO";
   } else if (s.header == 0xC4) {
     std::cout << "CAN" << std::endl;
     s.stateName = "LAN_CAN_DETECTOR";
@@ -814,8 +670,8 @@ singleBasicResponseState z21_response(std::vector<uint8_t> data) {
 
 ssize_t z21_sendto(int __fd, std::vector<uint8_t> msg, size_t __n,
                    __CONST_SOCKADDR_ARG __addr, socklen_t __addr_len) {
-  char buf[msg.size()];
-  for (int i = 0; i < msg.size(); i++) {
+  char buf[__n];
+  for (uint32_t i = 0; i < msg.size(); i++) {
     buf[i] = (char)msg[i];
   }
 
@@ -824,3 +680,50 @@ ssize_t z21_sendto(int __fd, std::vector<uint8_t> msg, size_t __n,
 
   return sendto(__fd, buf, sizeof(buf), MSG_CONFIRM, __addr, __addr_len);
 };
+
+nlohmann::json _jsonconvert(singleSerialNumberResponse s){
+  nlohmann::json j = {};
+  j["serialNumber"] = s.serialNumber;
+  return j;
+}
+nlohmann::json _jsonconvert(singleVersionResponse s){
+  nlohmann::json j = {};
+  j["xbus_ver"] = s.xbus_ver;
+  j["cmdst_id"] = s.cmdst_id;
+  return j;
+}
+nlohmann::json _jsonconvert(singleStatusChangedResponse s){
+  nlohmann::json j = {};
+  j["status"] = s.status;
+  return j;
+}
+nlohmann::json _jsonconvert(singleSystemStateDataChangeResponse s){
+  nlohmann::json j = {};
+  j["status"] = s.status;
+  return j;
+}
+nlohmann::json _jsonconvert(singleLocoInfo s){
+  nlohmann::json j = {};
+  j["LokID"] = s.LokID;
+  j["isUsed"] = s.isUsed;
+  j["LevelCount"] = s.LevelCount;
+  j["isForward"] = s.isForward;
+  j["rawSpeed"] = s.rawSpeed;
+  return j;
+}
+nlohmann::json _jsonconvert(singleTurnoutInfo s){
+  nlohmann::json j = {};
+  j["SwitchID"] = s.SwitchID;
+  j["SwitchState"] = s.SwitchState;
+  return j;
+}
+nlohmann::json _jsonconvert(singleCANDetector s){
+  nlohmann::json j = {};
+  j["NId"] = s.NId;
+  j["Addr"] = s.Addr;
+  j["Port"] = s.Port;
+  j["Typ"] = s.Typ;
+  j["v1"] = s.v1;
+  j["v2"] = s.v2;
+  return j;
+}

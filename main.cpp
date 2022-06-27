@@ -11,7 +11,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#include "lib.h"
+#include "lib.hpp"
 
 #define Z21_ADDRESS "192.168.0.111"
 //#define Z21_LOCAL_ADDRESS "192.168.0.101"
