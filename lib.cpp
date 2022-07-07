@@ -104,7 +104,6 @@ std::vector<uint8_t> formPacket(singleState s) {
 
 singleState z21_lan_get_serial_number() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -118,7 +117,6 @@ singleState z21_lan_get_serial_number() {
 
 singleState z21_lan_logoff() {
   singleState s;
-  s.p = 5;
 
   z21Datensatz d;
   d.isReq = true;
@@ -132,7 +130,6 @@ singleState z21_lan_logoff() {
 
 singleState z21_lan_x_get_version() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -156,7 +153,6 @@ singleState z21_lan_x_get_version() {
 
 singleState z21_lan_x_get_status() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -180,7 +176,6 @@ singleState z21_lan_x_get_status() {
 
 singleState z21_lan_x_set_track_power_off() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -204,7 +199,6 @@ singleState z21_lan_x_set_track_power_off() {
 
 singleState z21_lan_x_set_track_power_on() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -228,7 +222,6 @@ singleState z21_lan_x_set_track_power_on() {
 
 singleState z21_lan_x_set_stop() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -250,7 +243,6 @@ singleState z21_lan_x_set_stop() {
 
 singleState z21_lan_x_get_firmware_version() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -274,7 +266,6 @@ singleState z21_lan_x_get_firmware_version() {
 
 singleState z21_lan_set_broadcastflags(std::vector<uint32_t> flags) {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -296,7 +287,6 @@ singleState z21_lan_set_broadcastflags(std::vector<uint32_t> flags) {
 
 singleState z21_get_broadcastflags() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -310,7 +300,6 @@ singleState z21_get_broadcastflags() {
 
 singleState z21_lan_systemstate_getdata() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -324,7 +313,6 @@ singleState z21_lan_systemstate_getdata() {
 
 singleState z21_lan_get_hwinfo() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -338,7 +326,6 @@ singleState z21_lan_get_hwinfo() {
 
 singleState z21_lan_get_code() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -355,7 +342,6 @@ singleState z21_lan_get_code() {
 // 4.0 FAHREN
 singleState z21_lan_x_get_loco_info(uint16_t lok) {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -381,7 +367,6 @@ singleState z21_lan_x_get_loco_info(uint16_t lok) {
 singleState z21_lan_x_set_loco_drive(uint16_t lok, uint8_t levelCount,
                                      uint8_t forward, uint8_t speedLevel) {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -443,7 +428,6 @@ singleState z21_lan_x_set_loco_drive_emergency_hold(uint16_t lok,
 singleState z21_lan_x_set_loco_function(uint16_t lok, uint8_t action,
                                         uint8_t fIndex) {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -486,7 +470,6 @@ singleState z21_lan_x_set_turnout(uint16_t switchId, uint8_t turnway,
   if (queue != 0)
     throw std::runtime_error("not implemented");
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -522,7 +505,6 @@ singleState z21_lan_x_set_turnout(uint16_t switchId, uint8_t turnway,
 
 singleState z21_lan_can_detector_broadcast() {
   singleState s;
-  s.p = 1;
 
   z21Datensatz d;
   d.isReq = true;
@@ -568,6 +550,10 @@ z21_response_status_changed(std::vector<uint8_t> data) {
   singleStatusChangedResponse statusResponse;
   statusResponse.stateName = "LAN_X_STATUS_CHANGED";
   statusResponse.status = data[2];
+  statusResponse.csEmergencyStop = data[2] & 0x01;
+  statusResponse.csTrackVoltageOff = data[2] & 0x02;
+  statusResponse.csShortCircuit = data[2] & 0x04;
+  statusResponse.csProgrammingModeActive = data[2] & 0x20;
 
   return statusResponse;
 };
@@ -577,12 +563,42 @@ z21_response_systemstate_changed(std::vector<uint8_t> data) {
   // TODO: implement prestate here
   singleSystemStateDataChangeResponse stateResponse;
   stateResponse.stateName = "LAN_SYSTEMSTATE_DATACHANGED";
-  stateResponse.status = data[2];
+  //...
+  stateResponse.MainCurrent = static_cast<int16_t>(bytemerge(data[1], data[0]));
+  stateResponse.ProgCurrent = static_cast<int16_t>(bytemerge(data[3], data[2]));
+  stateResponse.FilteredMainCurrent =
+      static_cast<int16_t>(bytemerge(data[5], data[4]));
+  stateResponse.Temperature = static_cast<int16_t>(bytemerge(data[7], data[6]));
+  nlohmann::json cs = {};
+  uint8_t cs_v = data[12];
+  cs["csEmergencyStop"] = cs_v & 0x01;
+  cs["csTrackVoltageOff"] = cs_v & 0x02;
+  cs["csShortCircuit"] = cs_v & 0x04;
+  cs["csProgrammingModeActive"] = cs_v & 0x20;
+  stateResponse.CentralState = cs;
+  nlohmann::json csex = {};
+  uint8_t csex_v = data[13];
+  csex["cseHighTemperature"] = csex_v & 0x01;
+  csex["csePowerLost"] = csex_v & 0x02;
+  csex["cseShortCircuitExternal"] = csex_v & 0x04;
+  csex["cseShortCircuitInternal"] = csex_v & 0x08;
+  csex["cseRCN213"] = csex_v & 0x20;
+  stateResponse.CentralStateEx = csex;
+  nlohmann::json cp = {};
+  uint8_t cp_v = data[15];
+  cp["capDCC"] = cp_v & 0x01;
+  cp["capMM"] = cp_v & 0x02;
+  cp["capRailCom"] = cp_v & 0x08;
+  cp["capLocoCmds"] = cp_v & 0x10;
+  cp["capAccessoryCmds"] = cp_v & 0x20;
+  cp["capDetectorCmds"] = cp_v & 0x40;
+  cp["capNeedsUnlockCode"] = cp_v & 0x80;
+  stateResponse.Capabilities = cp;
 
   return stateResponse;
 };
 
-singleLocoInfo z21_lan_x_loco_info(std::vector<uint8_t> data) {
+singleLocoInfo z21_response_lan_x_loco_info(std::vector<uint8_t> data) {
   singleLocoInfo infoResponse;
   infoResponse.stateName = "LAN_X_LOCO_INFO";
   infoResponse.LokID = bytemerge(data[2], data[1]);
@@ -592,12 +608,26 @@ singleLocoInfo z21_lan_x_loco_info(std::vector<uint8_t> data) {
   infoResponse.rawSpeed = data[5] & 0x7f;
   // TODO: index überprüfen / oder 5
   std::vector<uint8_t> rf(data.begin() + 6, data.end());
-  infoResponse.rawFunctions = rf;
+  infoResponse.doppelTraktion = rf[0] & 0x40;
+  infoResponse.smartSearch = rf[0] & 0x20;
+  infoResponse.licht = rf[0] & 0x10;
+  infoResponse.f4 = rf[0] & 8;
+  infoResponse.f3 = rf[0] & 4;
+  infoResponse.f2 = rf[0] & 2;
+  infoResponse.f1 = rf[0] & 1;
+  auto a = nlohmann::json::array();
+
+  for (uint8_t t = 0; t < (rf.size() - 1) * 8; t++) {
+    a += rf[1 + (int)round(floor((double)t / 8))] &
+         (uint8_t)pow(2, 8 - (1 + t % 8));
+  }
+
+  infoResponse.adf = a;
 
   return infoResponse;
 };
 
-singleTurnoutInfo z21_lan_x_turnout_info(std::vector<uint8_t> data) {
+singleTurnoutInfo z21_response_lan_x_turnout_info(std::vector<uint8_t> data) {
   singleTurnoutInfo turnoutResponse;
   turnoutResponse.stateName = "LAN_X_TURNOUT_INFO";
   turnoutResponse.SwitchID = bytemerge(data[2], data[1]);
@@ -606,8 +636,7 @@ singleTurnoutInfo z21_lan_x_turnout_info(std::vector<uint8_t> data) {
   return turnoutResponse;
 };
 
-singleCANDetector z21_can_detector(std::vector<uint8_t> data) {
-  // TODO: implement prestate here
+singleCANDetector z21_response_can_detector(std::vector<uint8_t> data) {
   singleCANDetector stateResponse;
   stateResponse.stateName = "LAN_CAN_DETECTOR";
   stateResponse.NId = bytemerge(data[1], data[0]);
@@ -617,6 +646,40 @@ singleCANDetector z21_can_detector(std::vector<uint8_t> data) {
   stateResponse.v1 = bytemerge(data[7], data[6]);
   stateResponse.v2 = bytemerge(data[9], data[8]);
 
+  if (data[5] == 0x01) {
+    switch (data[5]) {
+    case 0x0000:
+      stateResponse.busyStateName = "FREE_NO_V";
+      break;
+    case 0x0100:
+      stateResponse.busyStateName = "FREE_W_V";
+      break;
+    case 0x1000:
+      stateResponse.busyStateName = "OCCUPIED_NO_V";
+      break;
+    case 0x1100:
+      stateResponse.busyStateName = "OCCUPIED_W_V";
+      break;
+    case 0x1201:
+      stateResponse.busyStateName = "OCCUPIED_U_1";
+      break;
+    case 0x1202:
+      stateResponse.busyStateName = "OCCUPIED_U_2";
+      break;
+    case 0x1203:
+      stateResponse.busyStateName = "OCCUPIED_U_3";
+      break;
+    default:
+      stateResponse.busyState = "UNKNOWN";
+    };
+  } else if (data[5] >= 0x11 && data[5] <= 0x1F) {
+    nlohmann::json a = {{"v1", {{"direction", 0}, {"lok", 0}}},
+                        {"v2", {{"direction", 0}, {"lok", 0}}}};
+    a["v1"]["direction"] = stateResponse.v1 & 0xC000;
+    a["v2"]["direction"] = stateResponse.v2 & 0xC000;
+    a["v1"]["lok"] = stateResponse.v1 & 0x3FFF;
+    a["v2"]["lok"] = stateResponse.v2 & 0x3FFF;
+  }
   std::cout << std::to_string(stateResponse.Addr) << " "
             << std::to_string(stateResponse.Port) << " p "
             << std::to_string(stateResponse.v1) << " v "
@@ -631,6 +694,68 @@ singleLocoData z21_loco_data(std::vector<uint8_t> data) {
   locoData.Id = data[5];
 
   return locoData;
+};
+
+singleFirmware z21_response_firmware(std::vector<uint8_t> data) {
+  singleFirmware firmwareData;
+  firmwareData.stateName = "LAN_X_GET_FIRMWARE_VERSION";
+  firmwareData.Version = bytemerge(data[3], data[2]);
+
+  return firmwareData;
+};
+
+singleCode z21_response_code(std::vector<uint8_t> data) {
+  singleCode codeData;
+  codeData.stateName = "LAN_X_GET_CODE";
+  codeData.Code = data[0];
+
+  return codeData;
+};
+
+singleHardware z21_response_hardware(std::vector<uint8_t> data) {
+  singleHardware hardwareData;
+  hardwareData.HwVersion = bytemerge(data[7], data[6], data[5], data[4]);
+  hardwareData.HwTypeRaw = bytemerge(data[3], data[2], data[1], data[0]);
+
+  switch (hardwareData.HwTypeRaw) {
+  case 0x00000200:
+    hardwareData.HwType = "D_HWT_Z21_OLD";
+    break;
+  case 0x00000201:
+    hardwareData.HwType = "D_HWT_Z21_NEW";
+    break;
+  case 0x00000202:
+    hardwareData.HwType = "D_HWT_SMARTRAIL";
+    break;
+  case 0x00000203:
+    hardwareData.HwType = "D_HWT_z21_SMALL";
+    break;
+  case 0x00000204:
+    hardwareData.HwType = "D_HWT_z21_START";
+    break;
+  case 0x00000205:
+    hardwareData.HwType = "D_HWT_SINGLE_BOOSTER";
+    break;
+  case 0x00000206:
+    hardwareData.HwType = "D_HWT_DUAL_BOOSTER";
+    break;
+  case 0x00000211:
+    hardwareData.HwType = "D_HWT_Z21_XL";
+    break;
+  case 0x00000212:
+    hardwareData.HwType = "D_HWT_XL_BOOSTER";
+    break;
+  case 0x00000301:
+    hardwareData.HwType = "D_HWT_Z21_SWITCH_DECODER";
+    break;
+  case 0x00000302:
+    hardwareData.HwType = "D_HWT_Z21_SIGNAL_DECODER";
+    break;
+  default:
+    hardwareData.HwType = "UNKNOWN";
+  };
+
+  return hardwareData;
 };
 
 singleBasicResponseState z21_response(std::vector<uint8_t> data) {
@@ -658,51 +783,84 @@ singleBasicResponseState z21_response(std::vector<uint8_t> data) {
     s.stateName = "LOCO_DATA";
   } else if (s.header == 0x10) {
     s.stateName = "LAN_GET_SERIAL_NUMBER";
-  } else if(s.header == 0x40 && idata[0] == 0xEF){
+    // z21_response_lan_get_serial_number
+  } else if (s.header == 0x40 && idata[0] == 0xEF) {
     s.stateName = "LAN_X_LOCO_INFO";
+    // z21_response_lan_x_loco_info
   } else if (s.header == 0xC4) {
     std::cout << "CAN" << std::endl;
     s.stateName = "LAN_CAN_DETECTOR";
+    // z21_response_can_detector
+  } else if (s.header == 0x40 && idata[0] == 0x62 && idata[1] == 0x22) {
+    s.stateName = "LAN_X_STATUS_CHANGED";
+    // z21_response_status_changed
+  } else if (s.header == 0x84) {
+    s.stateName = "LAN_SYSTEMSTATE_DATACHANGED";
+    // z21_response_systemstate_changed
+  } else if (s.header == 0x40 && idata[0] == 0x53) {
+    s.stateName = "LAN_X_TURNOUT_INFO";
+    // z21_response_lan_x_loco_info
+  } else if (s.header == 0x40 && idata[0] == 0x63 && idata[1] == 0x21) {
+    s.stateName = "LAN_X_VERSION";
+    // z21_response_lan_x_version
+  } else if (s.header == 0x40 && idata[0] == 0x61 && idata[1] == 0x00) {
+    s.stateName = "LAN_X_BC_TRACK_POWER_OFF";
+    // no method required
+  } else if (s.header == 0x40 && idata[0] == 0x61 && idata[1] == 0x01) {
+    s.stateName = "LAN_X_BC_TRACK_POWER_ON";
+    // no method required
+  } else if (s.header == 0x40 && idata[0] == 0x61 && idata[1] == 0x08) {
+    s.stateName = "LAN_X_BC_TRACK_SHORT_CIRCUIT";
+    // no method required
+  } else if (s.header == 0x40 && idata[0] == 0x81 && idata[1] == 0x00) {
+    s.stateName = "LAN_X_BC_STOPPED";
+    // no method required
+  } else if (s.header == 0x40 && idata[0] == 0xF3 && idata[1] == 0x0A) {
+    s.stateName = "LAN_X_GET_FIRMWARE_VERSION";
+    // z21_response_firmware
+  } else if (s.header == 0x18) {
+    s.stateName = "LAN_X_GET_CODE";
+    // z21_response_code
+  } else if (s.header == 0x1A) {
+    s.stateName = "LAN_GET_HWINFO";
+    // z21_response_hardware
   }
 
   return s;
 };
 
-ssize_t z21_sendto(int __fd, std::vector<uint8_t> msg, size_t __n,
-                   __CONST_SOCKADDR_ARG __addr, socklen_t __addr_len) {
-  char buf[__n];
-  for (uint32_t i = 0; i < msg.size(); i++) {
-    buf[i] = (char)msg[i];
-  }
-
-  // std::cout << std::to_string(sizeof(buf)) << " " <<
-  // std::to_string(msg.size()) << std::endl;
-
-  return sendto(__fd, buf, sizeof(buf), MSG_CONFIRM, __addr, __addr_len);
-};
-
-nlohmann::json _jsonconvert(singleSerialNumberResponse s){
+nlohmann::json _jsonconvert(singleSerialNumberResponse s) {
   nlohmann::json j = {};
   j["serialNumber"] = s.serialNumber;
   return j;
 }
-nlohmann::json _jsonconvert(singleVersionResponse s){
+nlohmann::json _jsonconvert(singleVersionResponse s) {
   nlohmann::json j = {};
   j["xbus_ver"] = s.xbus_ver;
   j["cmdst_id"] = s.cmdst_id;
   return j;
 }
-nlohmann::json _jsonconvert(singleStatusChangedResponse s){
+nlohmann::json _jsonconvert(singleStatusChangedResponse s) {
   nlohmann::json j = {};
   j["status"] = s.status;
+  j["csEmergencyStop"] = s.csEmergencyStop;
+  j["csTrackVoltageOff"] = s.csTrackVoltageOff;
+  j["csShortCircuit"] = s.csShortCircuit;
+  j["csProgrammingModeActive"] = s.csProgrammingModeActive;
   return j;
 }
-nlohmann::json _jsonconvert(singleSystemStateDataChangeResponse s){
+nlohmann::json _jsonconvert(singleSystemStateDataChangeResponse s) {
   nlohmann::json j = {};
-  j["status"] = s.status;
+  j["MainCurrent"] = s.MainCurrent;
+  j["ProgCurrent"] = s.ProgCurrent;
+  j["FilteredMainCurrent"] = s.FilteredMainCurrent;
+  j["Temperature"] = s.Temperature;
+  j["CentralState"] = s.CentralState;
+  j["CentralStateEx"] = s.CentralStateEx;
+  j["Capabilities"] = s.Capabilities;
   return j;
 }
-nlohmann::json _jsonconvert(singleLocoInfo s){
+nlohmann::json _jsonconvert(singleLocoInfo s) {
   nlohmann::json j = {};
   j["LokID"] = s.LokID;
   j["isUsed"] = s.isUsed;
@@ -711,13 +869,13 @@ nlohmann::json _jsonconvert(singleLocoInfo s){
   j["rawSpeed"] = s.rawSpeed;
   return j;
 }
-nlohmann::json _jsonconvert(singleTurnoutInfo s){
+nlohmann::json _jsonconvert(singleTurnoutInfo s) {
   nlohmann::json j = {};
   j["SwitchID"] = s.SwitchID;
   j["SwitchState"] = s.SwitchState;
   return j;
 }
-nlohmann::json _jsonconvert(singleCANDetector s){
+nlohmann::json _jsonconvert(singleCANDetector s) {
   nlohmann::json j = {};
   j["NId"] = s.NId;
   j["Addr"] = s.Addr;
@@ -725,5 +883,22 @@ nlohmann::json _jsonconvert(singleCANDetector s){
   j["Typ"] = s.Typ;
   j["v1"] = s.v1;
   j["v2"] = s.v2;
+  return j;
+}
+nlohmann::json _jsonconvert(singleFirmware s) {
+  nlohmann::json j = {};
+  j["Version"] = s.Version;
+  return j;
+}
+nlohmann::json _jsonconvert(singleCode s) {
+  nlohmann::json j = {};
+  j["Code"] = s.Code;
+  return j;
+}
+nlohmann::json _jsonconvert(singleHardware s) {
+  nlohmann::json j = {};
+  j["HwType"] = s.HwType;
+  j["HwVersion"] = s.HwVersion;
+  j["HwTypeRaw"] = s.HwTypeRaw;
   return j;
 }

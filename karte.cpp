@@ -104,8 +104,6 @@ void findShortestPaths(Graph const &graph, int source, int n) {
     done[u] = true;
   }
 
-  std::ofstream MyFile("v-data/" + std::to_string(source) + "-strecken.data");
-
   for (int i = 0; i < n; i++) {
     if (i != source && dist[i] != INT_MAX) {
       auto path = buildPath(prev, graph, i, source);
@@ -127,11 +125,8 @@ void findShortestPaths(Graph const &graph, int source, int n) {
         }
       }
       std::cout << source << " " << i << " " << c;
-      MyFile << source << " " << i << " " << c;
-      MyFile << std::endl;
     };
   }
-  MyFile.close();
 };
 
 // Mapping

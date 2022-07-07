@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   z21_sendto(sockfd, driveMsg1, sizeof(driveMsg1), (struct sockaddr *)&servaddr,
              sizeof(servaddr));*/
   
-  singleState s2 = z21_lan_x_set_loco_drive(3, 0, 1, 0);
+  singleState s2 = z21_lan_x_set_loco_drive(3, 0, 1, 14);
   //singleState s2 = z21_lan_x_set_turnout(4, 1, 0);
   auto driveMsg2 = formPacket(s2);
   z21_sendto(sockfd, driveMsg2, sizeof(driveMsg2), (struct sockaddr *)&servaddr,

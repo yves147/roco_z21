@@ -49,7 +49,8 @@ std::vector<std::function<void(std::vector<uint8_t> data)>> udpListeners;
 std::vector<std::function<void(nlohmann::json data)>> broadcastListeners;
 // GLOBAL VARIABLES <=
 
-std::mutex WSControlFlowMutex;
+const uint8_t MAX_CLIENTS = 8;
+uint8_t C_CLIENTCOUNT = 0;
 
 void fail(beast::error_code ec, char const *what) {
   std::cerr << what << ": " << ec.message() << "\n";
@@ -69,6 +70,7 @@ public:
       : ws_(std::move(socket)) {}
 
   ~session() {
+    --C_CLIENTCOUNT;
     udpListeners[t_u] = [](nlohmann::json data) {};
     broadcastListeners[t_b] = [](nlohmann::json data) {};
   }
@@ -97,14 +99,86 @@ public:
     if (ec)
       return fail(ec, "accept");
 
+    if (C_CLIENTCOUNT == MAX_CLIENTS) {
+      nlohmann::json j = {{"command", "WS_MAX"},
+                          {"clientCount", C_CLIENTCOUNT}};
+      write(j.dump());
+      return;
+    }
+
+    ++C_CLIENTCOUNT;
+
+    nlohmann::json j = {{"command", "WS_GREETING"},
+                        {"clientCount", C_CLIENTCOUNT}};
+    write(j.dump());
+
     t_u = udpListeners.size();
     auto d_u = [this](std::vector<uint8_t> data) {
       // d = udpData;
       singleBasicResponseState response = z21_response(data);
       if (response.stateName == "LAN_GET_SERIAL_NUMBER") {
-        singleSerialNumberResponse s =
-            z21_response_lan_get_serial_number(response.raw);
-        nlohmann::json j = {{"command", "R_SERIAL_NUMBER"},
+        auto s = z21_response_lan_get_serial_number(response.raw);
+        nlohmann::json j = {{"command", "UDP_SERIAL"},
+                            {"captured", _jsonconvert(s)}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_LOCO_INFO") {
+        auto s = z21_response_lan_x_loco_info(response.raw);
+        nlohmann::json j = {{"command", "UDP_LOCO_INFO"},
+                            {"captured", _jsonconvert(s)}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_CAN_DETECTOR") {
+        auto s = z21_response_can_detector(response.raw);
+        nlohmann::json j = {{"command", "UDP_CAN_DETECTOR"},
+                            {"captured", _jsonconvert(s)}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_STATUS_CHANGED") {
+        auto s = z21_response_status_changed(response.raw);
+        nlohmann::json j = {{"command", "UDP_STATUS"},
+                            {"captured", _jsonconvert(s)}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_SYSTEMSTATE_DATACHANGED") {
+        auto s = z21_response_systemstate_changed(response.raw);
+        nlohmann::json j = {{"command", "UDP_SYSTEMSTATE"},
+                            {"captured", _jsonconvert(s)}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_TURNOUT_INFO") {
+        auto s = z21_response_lan_x_turnout_info(response.raw);
+        nlohmann::json j = {{"command", "UDP_TURNOUT"},
+                            {"captured", _jsonconvert(s)}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_VERSION") {
+        auto s = z21_response_lan_x_version(response.raw);
+        nlohmann::json j = {{"command", "UDP_VERSION"},
+                            {"captured", _jsonconvert(s)}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_BC_TRACK_POWER_OFF") {
+        nlohmann::json j = {{"command", "UDP_TRACK_POWER_OFF"},
+                            {"captured", {}}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_BC_TRACK_POWER_ON") {
+        nlohmann::json j = {{"command", "UDP_TRACK_POWER_ON"},
+                            {"captured", {}}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_BC_TRACK_SHORT_CIRCUIT") {
+        nlohmann::json j = {{"command", "UDP_TRACK_SHORT_CIRCUIT"},
+                            {"captured", {}}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_BC_STOPPED") {
+        nlohmann::json j = {{"command", "UDP_STOPPED"}, {"captured", {}}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_GET_FIRMWARE_VERSION") {
+        auto s = z21_response_firmware(response.raw);
+        nlohmann::json j = {{"command", "UDP_FIRMWARE"},
+                            {"captured", _jsonconvert(s)}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_X_GET_CODE") {
+        auto s = z21_response_code(response.raw);
+        nlohmann::json j = {{"command", "UDP_CODE"},
+                            {"captured", _jsonconvert(s)}};
+        write(j.dump());
+      } else if (response.stateName == "LAN_GET_HWINFO") {
+        auto s = z21_response_hardware(response.raw);
+        nlohmann::json j = {{"command", "UDP_HARDWARE"},
                             {"captured", _jsonconvert(s)}};
         write(j.dump());
       }

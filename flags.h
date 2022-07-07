@@ -11,7 +11,14 @@
 #define CAN_DETECTOR        0x00080000
 #define CAN_BOOSTER         0x00020000
 
-#define csEmergencyStop 0x01
-#define csTrackVoltageOff 0x02
-#define csShortCircuit 0x04
-#define csProgrammingModeActive 0x20
+#define D_HWT_Z21_OLD 0x00000200
+#define D_HWT_Z21_NEW 0x00000201
+#define D_HWT_SMARTRAIL 0x00000202
+#define D_HWT_z21_SMALL 0x00000203
+#define D_HWT_z21_START 0x00000204
+#define D_HWT_SINGLE_BOOSTER 0x00000205
+#define D_HWT_DUAL_BOOSTER 0x00000206
+#define D_HWT_Z21_XL 0x00000211
+#define D_HWT_XL_BOOSTER 0x00000212
+#define D_HWT_Z21_SWITCH_DECODER 0x00000301
+#define D_HWT_Z21_SIGNAL_DECODER 0x00000302
